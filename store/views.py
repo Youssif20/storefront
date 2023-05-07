@@ -19,7 +19,7 @@ from .serializers import AddCartItemSerializer, CartItemSerializer, CartSerializ
 
 
 class ProductViewSet(ModelViewSet):
-    queryset = Product.objects.all()
+    queryset = Product.objects.prefetch_related('images').all()
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
@@ -37,6 +37,24 @@ class ProductViewSet(ModelViewSet):
                             status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
         return super().destroy(request, *args, **kwargs)
+
+
+class ProductImageViewSet(ModelViewSet):
+    serializer_class = ProductImageSerializer
+    queryset = ProductImage.objects.all()
+
+    def get_serializer_context(self):
+        return {'product_id': self.kwargs['product_pk']}
+
+    def get_queryset(self):
+        return ProductImage.objects.filter(product_id=self.kwargs['product_pk'])
+
+    # def get_queryset(self):
+    #     product_pk = self.kwargs.get('product_pk', None)
+    #     if product_pk is not None:
+    #         return ProductImage.objects.filter(product_id=product_pk)
+    #     else:
+    #         return ProductImage.objects.none()
 
 
 class CollectionViewSet(ModelViewSet):
@@ -146,10 +164,3 @@ class OrderViewSet(ModelViewSet):
         customer_id = Customer.objects.only(
             'id').get(user_id=user.id)
         return Order.objects.filter(customer_id=customer_id)
-
-
-class ProductImageViewSet(ModelViewSet):
-    serializer_class = ProductImageSerializer
-
-    def get_queryset(self):
-        return ProductImage.objects.filter(product_id=self.kwargs['product_pk'])
