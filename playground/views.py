@@ -1,22 +1,27 @@
 from django.shortcuts import render
-# from django.core.cache import cache
 from django.views.decorators.cache import cache_page
 import requests
 from rest_framework.views import APIView
 from django.utils.decorators import method_decorator
-
+import logging
 
 # from django.core.mail import send_mail, mail_admins, BadHeaderError, EmailMessage
 # from templated_mail.mail import BaseEmailMessage
+
+logger = logging.getLogger(__name__)
 
 
 class HelloView(APIView):
     @method_decorator(cache_page(5 * 60))
     def get(self, request):
-        response = requests.get('https://httpbin.org/delay/2')
-        data = response.json()
+        try:
+            logger.info("calling httpbin")
+            response = requests.get('https://httpbin.org/delay/2')
+            logger.info('Received the response')
+            data = response.json()
+        except request.ConnectionErrorL:
+            logger.critical("httpbin not available")
         return render(request, 'hello.html', {'name': "joe"})
-
 
 # def say_hello(request):
 #     send_mail('subject', 'message', 'joe@gmail.com', ['joe2@gmail.com'])
